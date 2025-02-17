@@ -10,7 +10,7 @@ from groq import Groq
 app = FastAPI()
 
 # Set your Groq API Key
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") = "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"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY is not set. Please add it to your environment variables.")
 
