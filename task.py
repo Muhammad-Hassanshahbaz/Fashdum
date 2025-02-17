@@ -1,40 +1,35 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
-import openai
 import tempfile
 from gtts import gTTS
 from difflib import SequenceMatcher
 import os
-
-# Set your OpenAI API Key
-openai.api_key = "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"
+from groq import Groq
 
 # Initialize FastAPI app
 app = FastAPI()
 
+# Set your Groq API Key
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") = "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"
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY is not set. Please add it to your environment variables.")
+
+client = Groq(api_key=GROQ_API_KEY)
+
 # Urdu Fashion Catalog
 FASHION_CATALOG_URDU = {
     "101": {
-        "description": (
-            "یہ ایک شاندار سیاہ شام کا گاؤن ہے جو جلپری کے انداز کا ہے۔ "
-            "یہ ریشم کے بہترین کپڑے سے بنایا گیا ہے اور رسمی تقریبات کے لیے موزوں ہے۔"
-        ),
+        "description": "یہ ایک شاندار سیاہ شام کا گاؤن ہے جو جلپری کے انداز کا ہے۔ یہ ریشم کے بہترین کپڑے سے بنایا گیا ہے۔",
         "price": "120 ڈالر",
         "characteristics": "خوبصورت، جدید ڈیزائن، ریشمی کپڑا، فرش تک لمبائی۔",
     },
     "102": {
-        "description": (
-            "یہ ایک خوبصورت پھولوں والا لباس ہے، خاص طور پر گرمیوں کے لیے موزوں۔ "
-            "اس کا ہلکا پھلکا کپڑا آپ کو ٹھنڈک کا احساس دیتا ہے۔"
-        ),
+        "description": "یہ ایک خوبصورت پھولوں والا لباس ہے، خاص طور پر گرمیوں کے لیے موزوں۔",
         "price": "80 ڈالر",
         "characteristics": "پھولوں کا ڈیزائن، ہلکا پھلکا کپڑا، گھٹنے تک لمبائی۔",
     },
     "104": {
-        "description": (
-            "یہ ایک خوبصورت پھولوں والا لباس ہے، خاص طور پر گرمیوں کے لیے موزوں۔ "
-            "اس کا ہلکا پھلکا کپڑا آپ کو ٹھنڈک کا احساس دیتا ہے۔"
-        ),
+        "description": "یہ ایک خوبصورت پھولوں والا لباس ہے، خاص طور پر گرمیوں کے لیے موزوں۔",
         "price": "80 ڈالر",
         "characteristics": "پھولوں کا ڈیزائن، ہلکا پھلکا کپڑا، گھٹنے تک لمبائی۔",
     },
@@ -103,14 +98,15 @@ async def process_audio(audio_file: UploadFile = File(...)):
         temp_audio_path = temp_audio.name
 
     try:
-        with open(temp_audio_path, "rb") as audio:
-            transcription = openai.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio,
-                response_format="text",
-                language="ur"
+        with open(temp_audio_path, "rb") as file:
+            transcription = client.audio.translations.create(
+                file=(temp_audio_path, file.read()),
+                model="whisper-large-v3",
+                prompt="Specify context or spelling",
+                response_format="json",
+                temperature=0.0
             )
-        user_query = transcription.strip()
+        user_query = transcription.text.strip()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during transcription: {e}")
     finally:
